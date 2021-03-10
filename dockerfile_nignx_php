@@ -1,0 +1,19 @@
+FROM wyveo/nginx-php-fpm:php74
+
+ARG ROOT_PATH="/var/www/html/project-app"
+RUN cp /usr/share/zoneinfo/Asia/Almaty /etc/localtime
+
+COPY . ${ROOT_PATH}
+WORKDIR ${ROOT_PATH}
+
+RUN apt-get update && apt-get install -y cron tini &&\
+    echo "*/5 * * * * ${ROOT_PATH}/start-script.sh" >> mycron &&\
+	crontab mycron &&\
+	rm mycron
+
+# Add Scripts
+ADD ./start.sh /start.sh
+RUN chmod 777 /start.sh ${ROOT_PATH}/start-script.sh
+
+ENTRYPOINT ["tini", "--"]
+CMD ["/start.sh", "&"]
